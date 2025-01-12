@@ -43,3 +43,6 @@ coverage.html
 /go.sum
 
 input.txt
+large_test.txt
+
+*.sh

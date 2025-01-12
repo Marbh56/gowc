@@ -8,16 +8,18 @@ import (
 )
 
 func main() {
+	var shouldCountBytes, shouldCountLines, shouldCountWords bool
 
-	var shouldCountBytes bool
-	var shouldCountLines bool
-	var shouldCountWords bool
-
-	flag.BoolVar(&shouldCountBytes, "b", false, "Count the Bytes of the input")
-	flag.BoolVar(&shouldCountLines, "l", false, "Count the number of lines in the input")
-	flag.BoolVar(&shouldCountWords, "w", false, "Count the number of words in the input")
-
+	flag.BoolVar(&shouldCountBytes, "b", false, "Count bytes")
+	flag.BoolVar(&shouldCountLines, "l", false, "Count lines")
+	flag.BoolVar(&shouldCountWords, "w", false, "Count words")
 	flag.Parse()
+
+	if !shouldCountBytes && !shouldCountLines && !shouldCountWords {
+		shouldCountBytes = true
+		shouldCountLines = true
+		shouldCountWords = true
+	}
 
 	args := flag.Args()
 	if len(args) < 1 {
@@ -26,119 +28,65 @@ func main() {
 		os.Exit(1)
 	}
 
-	filename := args[0]
-
-	if !shouldCountBytes && !shouldCountLines && !shouldCountWords {
-		shouldCountBytes = true
-		shouldCountLines = true
-		shouldCountWords = true
-	}
-	if shouldCountWords {
-		count, err := countWords(filename)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error counting words: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("%d -- Words\n", count)
-	}
-
-	if shouldCountLines {
-		count, err := countLines(filename)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error counting lines: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("%d -- Lines\n", count)
+	counts, err := processFile(args[0], shouldCountBytes, shouldCountLines, shouldCountWords)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error processing file: %v\n", err)
+		os.Exit(1)
 	}
 
 	if shouldCountBytes {
-		count, err := countBytes(filename)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error counting bytes: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Printf("%d -- Bytes\n", count)
+		fmt.Printf("%d bytes\n", counts.bytes)
+	}
+	if shouldCountLines {
+		fmt.Printf("%d lines\n", counts.lines)
+	}
+	if shouldCountWords {
+		fmt.Printf("%d words\n", counts.words)
 	}
 }
 
-func countBytes(filename string) (int, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
-
-	buffer := make([]byte, 1024)
-	totalBytes := 0
-
-	for {
-		bytesRead, err := file.Read(buffer)
-		totalBytes += bytesRead
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return totalBytes, nil
+type Counts struct {
+	bytes int
+	lines int
+	words int
 }
 
-func countLines(filename string) (int, error) {
+func processFile(filename string, countBytes, countLines, countWords bool) (Counts, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return 0, err
+		return Counts{}, err
 	}
 	defer file.Close()
 
-	buffer := make([]byte, 1024)
-	lineCount := 0
-
-	for {
-		bytesRead, err := file.Read(buffer)
-
-		for i := 0; i < bytesRead; i++ {
-			if buffer[i] == '\n' {
-				lineCount++
-			}
-		}
-
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return 0, err
-		}
-	}
-	return lineCount, nil
-}
-
-func countWords(filename string) (int, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return 0, err
-	}
-	defer file.Close()
+	counts := Counts{}
 
 	buffer := make([]byte, 1024)
-	wordCount := 0
+
 	inWord := false
 
 	for {
 		bytesRead, err := file.Read(buffer)
 
+		if countBytes {
+			counts.bytes += bytesRead
+		}
+
 		for i := 0; i < bytesRead; i++ {
-			isWhitespace := buffer[i] == ' ' || buffer[i] == '\n' ||
-				buffer[i] == '\t' || buffer[i] == '\r'
-			if isWhitespace {
-				inWord = false
-			} else if !inWord {
-				wordCount++
-				inWord = true
+
+			if countLines && buffer[i] == '\n' {
+				counts.lines++
+			}
+
+			if countWords {
+				isWhitespace := buffer[i] == ' ' || buffer[i] == '\n' ||
+					buffer[i] == '\t' || buffer[i] == '\r'
+
+				if isWhitespace {
+					inWord = false
+				} else if !inWord {
+					counts.words++
+					inWord = true
+				}
 			}
 		}
 
@@ -146,10 +94,9 @@ func countWords(filename string) (int, error) {
 			break
 		}
 		if err != nil {
-			return 0, err
+			return Counts{}, err
 		}
 	}
 
-	return wordCount, nil
-
+	return counts, nil
 }
