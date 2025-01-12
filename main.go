@@ -24,29 +24,32 @@ func main() {
 	}
 
 	args := flag.Args()
-	if len(args) < 1 {
-		fmt.Fprintf(os.Stderr, "Error: Please provide a filename\n")
-		flag.Usage()
-		os.Exit(1)
-	}
 
-	counts, err := processFile(args[0], shouldCountBytes, shouldCountLines, shouldCountWords, shouldCountCharacters)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error processing file: %v\n", err)
-		os.Exit(1)
+	if len(args) == 0 {
+		counts, err := processReader(os.Stdin, shouldCountBytes, shouldCountLines, shouldCountWords, shouldCountCharacters)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error processing stdin: %v\n", err)
+			os.Exit(1)
+		}
+		printCounts(counts, "")
+		return
 	}
+	for _, filename := range args {
+		file, err := os.Open(filename)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error opening %s: %v\n", filename, err)
+			continue
+		}
 
-	if shouldCountBytes {
-		fmt.Printf("%d -- bytes\n", counts.bytes)
-	}
-	if shouldCountLines {
-		fmt.Printf("%d -- lines\n", counts.lines)
-	}
-	if shouldCountWords {
-		fmt.Printf("%d -- words\n", counts.words)
-	}
-	if shouldCountCharacters {
-		fmt.Printf("%d -- characters\n", counts.characters)
+		counts, err := processReader(file, shouldCountBytes, shouldCountLines, shouldCountWords, shouldCountCharacters)
+		file.Close()
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error processing %s: %v\n", filename, err)
+			continue
+		}
+
+		printCounts(counts, filename)
 	}
 }
 
@@ -57,21 +60,13 @@ type Counts struct {
 	characters int
 }
 
-func processFile(filename string, countBytes, countLines, countWords, countCharacters bool) (Counts, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return Counts{}, err
-	}
-	defer file.Close()
-
-	reader := bufio.NewReader(file)
+func processReader(reader io.Reader, countBytes, countLines, countWords, countCharacters bool) (Counts, error) {
+	bufReader := bufio.NewReader(reader)
 	counts := Counts{}
-
 	inWord := false
 
 	for {
-		r, size, err := reader.ReadRune()
-
+		r, size, err := bufReader.ReadRune()
 		if err == io.EOF {
 			break
 		}
@@ -82,18 +77,14 @@ func processFile(filename string, countBytes, countLines, countWords, countChara
 		if countBytes {
 			counts.bytes += size
 		}
-
 		if countCharacters {
 			counts.characters++
 		}
-
 		if countLines && r == '\n' {
 			counts.lines++
 		}
-
 		if countWords {
 			isWhitespace := r == ' ' || r == '\n' || r == '\t' || r == '\r'
-
 			if isWhitespace {
 				inWord = false
 			} else if !inWord {
@@ -103,4 +94,27 @@ func processFile(filename string, countBytes, countLines, countWords, countChara
 		}
 	}
 	return counts, nil
+}
+
+func printCounts(counts Counts, filename string) {
+	var output string
+
+	if counts.lines > 0 {
+		output += fmt.Sprintf(" %7d", counts.lines)
+	}
+	if counts.words > 0 {
+		output += fmt.Sprintf(" %7d", counts.words)
+	}
+	if counts.bytes > 0 {
+		output += fmt.Sprintf(" %7d", counts.bytes)
+	}
+	if counts.characters > 0 {
+		output += fmt.Sprintf(" %7d", counts.characters)
+	}
+
+	if filename != "" {
+		output += fmt.Sprintf(" %s", filename)
+	}
+
+	fmt.Println(output)
 }
