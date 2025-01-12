@@ -1,4 +1,4 @@
-# Word Count Tool
+# GOWC
 A simple command-line tool that counts lines, words, bytes, and characters in text files, similar to the Unix wc command.
 
 ## Usage
