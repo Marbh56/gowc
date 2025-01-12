@@ -5,7 +5,6 @@ A simple command-line tool that counts lines, words, bytes, and characters in te
 ```Bash
 ./gowc [options] [filename]
 ```
-## Options
 
 ## Options
 
