@@ -2,14 +2,19 @@
 A simple command-line tool that counts lines, words, bytes, and characters in text files, similar to the Unix wc command.
 
 ## Usage
-bashCopy./wordcount [options] [filename]
+```Bash
+./gowc [options] [filename]
+```
+## Options
 
 ## Options
 
--l Count lines
--w Count words
--b Count bytes
--m Count characters
+| Option | Description |
+|--------|-------------|
+| `-l` | Count lines |
+| `-w` | Count words |
+| `-b` | Count bytes |
+| `-m` | Count characters |
 
 If no options are specified, the program defaults to counting lines, words, and bytes.
 
@@ -23,12 +28,12 @@ Count everything in a file (defaults to lines, words, and bytes):
 ### Count only lines:
 
 ```bash
-./wordcount -l myfile.txt
+./gowc -l myfile.txt
 7 myfile.txt
 ```
 ### Count both lines and characters:
 ```bash
-./wordcount -l -m myfile.txt
+./gowc -l -m myfile.txt
 7      152 myfile.txt
 ```
 
