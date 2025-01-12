@@ -41,3 +41,5 @@ coverage.html
 # Dependency directories (remove these if you're not using modules)
 /vendor/
 /go.sum
+
+input.txt

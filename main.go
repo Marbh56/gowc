@@ -10,8 +10,10 @@ import (
 func main() {
 
 	var shouldCountBytes bool
+	var shouldCountLines bool
 
 	flag.BoolVar(&shouldCountBytes, "b", false, "Count the Bytes of the input")
+	flag.BoolVar(&shouldCountLines, "l", false, "Count the number of lines in the input")
 	flag.Parse()
 
 	args := flag.Args()
