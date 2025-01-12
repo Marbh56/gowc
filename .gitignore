@@ -1,0 +1,43 @@
+# Binaries and object files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go specific
+/vendor/
+/Godeps/
+.env
+
+# Binary folder usually output from go build
+/bin/
+/pkg/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Debug files
+__debug_bin
+debug.test
+
+# Go workspace file
+go.work
+
+# Test binary, built with go test -c
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories (remove these if you're not using modules)
+/vendor/
+/go.sum
